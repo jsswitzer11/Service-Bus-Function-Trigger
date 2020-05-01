@@ -22,7 +22,7 @@ namespace ServiceBusTriggerTest
     {
         private static Settings settings;
         [FunctionName("Function1")]
-        public static void Run([ServiceBusTrigger("defense", Connection = "ServiceBusConnectionString", IsSessionsEnabled =true)]string message, ILogger log, ExecutionContext context)
+        public static void Run([ServiceBusTrigger("defense", Connection = "ServiceBusConnectionString")]string message, ILogger log, ExecutionContext context)
         {
             DefFfmpegArgs(message, log, context);
             log.LogInformation($"C# ServiceBus queue trigger function processed message: {message}");
@@ -40,11 +40,11 @@ namespace ServiceBusTriggerTest
                 //var lines = await GetDefArgs("ffmpegargs", log);
                 //List<string> args = new List<string>(lines.Split('\n'));
 
-                //outfile = message.Substring(message.LastIndexOf("D:\\")).TrimEnd();
-                //outputName = message.Substring(message.LastIndexOf("Temp\\") + 5).TrimEnd();
+                outfile = message.Substring(message.LastIndexOf("D:\\")).TrimEnd();
+                outputName = message.Substring(message.LastIndexOf("Temp\\") + 5).TrimEnd();
 
-                outfile = message.Substring(message.LastIndexOf("C:\\")).TrimEnd();
-                outputName = message.Substring(message.LastIndexOf("FfmpegArgs\\") + 11).TrimEnd();
+                //outfile = message.Substring(message.LastIndexOf("C:\\")).TrimEnd();
+                //outputName = message.Substring(message.LastIndexOf("FfmpegArgs\\") + 11).TrimEnd();
 
                 log.LogInformation("Play file location: " + outfile);
                 log.LogInformation("Play file name: " + outputName);
