@@ -70,7 +70,6 @@ namespace ServiceBusTriggerTest
                 if (settings.verboseFFMPEGLogging)
                 {
                     log.LogInformation(process.StandardError.ReadToEnd());
-                    //log.LogInformation(process.StandardOutput.ReadToEnd());
                     process.BeginOutputReadLine();
                 }
 

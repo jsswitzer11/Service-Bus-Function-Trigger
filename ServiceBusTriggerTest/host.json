@@ -12,7 +12,6 @@
   "extensions": {
     "serviceBus": {
       "messageHandlerOptions": {
-        "autoComplete": true,
         "maxConcurrentCalls": 1
       }
     }
