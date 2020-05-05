@@ -1,20 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Host;
-using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
 using Azure.Storage.Blobs;
 using System.Diagnostics;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
 
 namespace ServiceBusTriggerTest
 {
@@ -28,7 +19,7 @@ namespace ServiceBusTriggerTest
             log.LogInformation($"C# ServiceBus queue trigger function processed message: {message}");
         }
 
-        public static Task<string> DefFfmpegArgs(string message, ILogger log, ExecutionContext context)
+        public static void DefFfmpegArgs(string message, ILogger log, ExecutionContext context)
         {
             try
             {
@@ -79,15 +70,16 @@ namespace ServiceBusTriggerTest
                 log.LogInformation("Completed ffmpeg write");
 
                 WritePlayVideoBlob(outputName, outfile, log);
+
+                log.LogInformation($"{outputName} has been uploaded to Blob storage.");
             }
             catch (Exception ex)
             {
                 log.LogInformation(ex.InnerException.ToString());
             }
 
-            log.LogInformation($"{message} has been executed.");
             //return $"Successfully Completed";
-            return Task.Delay(1000).ContinueWith(t => "Successfully Completed");
+            //return Task.Delay(1000).ContinueWith(t => "Successfully Completed");
         }
 
         static void WritePlayVideoBlob(string filename, string filepath, ILogger log)
