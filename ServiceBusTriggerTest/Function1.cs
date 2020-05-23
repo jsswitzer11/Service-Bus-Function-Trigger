@@ -13,7 +13,7 @@ namespace ServiceBusTriggerTest
     {
         private static Settings settings;
         [FunctionName("Function1")]
-        public static void Run([ServiceBusTrigger("offense", Connection = "ServiceBusConnectionString")]string message, ILogger log, ExecutionContext context)
+        public static void Run([ServiceBusTrigger("defense", Connection = "ServiceBusConnectionString")]string message, ILogger log, ExecutionContext context)
         {
             DefFfmpegArgs(message, log, context);
             log.LogInformation($"C# ServiceBus queue trigger function processed message: {message}");

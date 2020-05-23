@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "functionTimeout": "00:10:00",
+  "functionTimeout": "00:59:00",
   "logging": {
     "applicationInsights": {
       "samplingExcludedTypes": "Request",
@@ -14,7 +14,7 @@
       "messageHandlerOptions": {
         "maxConcurrentCalls": 1,
         "autoComplete": true,
-        "maxAutoRenewDuration": "00:09:00"
+        "maxAutoRenewDuration": "00:55:00"
       }
     }
   }
