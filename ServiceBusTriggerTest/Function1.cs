@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Azure.Storage.Blobs;
 using System.Diagnostics;
+using Microsoft.Azure.ServiceBus;
 
 namespace ServiceBusTriggerTest
 {
@@ -27,9 +28,6 @@ namespace ServiceBusTriggerTest
                 string outputName;
 
                 GetSettings(context, log);
-
-                //var lines = await GetDefArgs("ffmpegargs", log);
-                //List<string> args = new List<string>(lines.Split('\n'));
 
                 outfile = message.Substring(message.LastIndexOf("D:\\")).TrimEnd();
                 outputName = message.Substring(message.LastIndexOf("Temp\\") + 5).TrimEnd();
@@ -77,9 +75,6 @@ namespace ServiceBusTriggerTest
             {
                 log.LogInformation(ex.InnerException.ToString());
             }
-
-            //return $"Successfully Completed";
-            //return Task.Delay(1000).ContinueWith(t => "Successfully Completed");
         }
 
         static void WritePlayVideoBlob(string filename, string filepath, ILogger log)
@@ -144,7 +139,7 @@ namespace ServiceBusTriggerTest
                 settings.outputStorageAccountConnStr = config["VikingsStorageAccount"];
                 settings.storageAccountName = config["storageAccountName"];
                 settings.sasToken = config["sasToken"];
-                settings.blobContainerName = "plays";
+                settings.blobContainerName = "2019/Reg/1/defense/";
                 if (!String.IsNullOrEmpty(config["blobContainerName"]))
                 {
                     settings.blobContainerName = config["blobContainerName"];
