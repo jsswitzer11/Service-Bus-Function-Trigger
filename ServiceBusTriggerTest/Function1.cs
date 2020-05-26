@@ -7,11 +7,18 @@ using Microsoft.Extensions.Logging;
 using Azure.Storage.Blobs;
 using System.Diagnostics;
 using Microsoft.Azure.ServiceBus;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
+using System.Text;
+using System.Xml;
 
 namespace ServiceBusTriggerTest
 {
     public static class Function1
     {
+        private static string Season;
+        private static string SeasonType;
+        private static string Week;
         private static Settings settings;
         [FunctionName("Function1")]
         public static void Run([ServiceBusTrigger("defense", Connection = "ServiceBusConnectionString")]string message, ILogger log, ExecutionContext context)
@@ -77,12 +84,30 @@ namespace ServiceBusTriggerTest
             }
         }
 
-        static void WritePlayVideoBlob(string filename, string filepath, ILogger log)
+        static async void WritePlayVideoBlob(string filename, string filepath, ILogger log)
         {
             try
             {
+                string rawXML = await GetXMLBlob("xmlscript");
+                byte[] encodedString = Encoding.UTF8.GetBytes(rawXML);
+
+                MemoryStream memStream = new MemoryStream(encodedString);
+
+                XmlDocument xml = new XmlDocument();
+                xml.Load(memStream);
+
+                foreach (XmlNode node in xml.DocumentElement.ChildNodes)
+                {
+                    if (node.Name == "Game")
+                    {
+                        Season = node.Attributes.GetNamedItem("Season").Value.ToString();
+                        SeasonType = node.Attributes.GetNamedItem("SeasonType").Value;
+                        Week = node.Attributes.GetNamedItem("Week").Value.ToString();
+                    }
+                }
+
                 BlobServiceClient blobServiceClient = new BlobServiceClient(settings.outputStorageAccountConnStr);
-                BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient(settings.blobContainerName);
+                BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient($"{Season}/{SeasonType}/{Week}/defense/");
 
                 BlobClient blobClient = blobContainerClient.GetBlobClient(filename);
 
@@ -94,6 +119,24 @@ namespace ServiceBusTriggerTest
             {
                 log.LogInformation(ex.Message);
             }
+        }
+
+        public static async Task<string> GetXMLBlob(string inputContainerName)
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(settings.outputStorageAccountConnStr);
+            // Connect to the blob storage
+            var serviceClient = storageAccount.CreateCloudBlobClient();
+            // Connect to the input
+            CloudBlobContainer inputContainer = serviceClient.GetContainerReference($"{inputContainerName}");
+            // Connect to the blob file
+            var blobItem = await inputContainer.ListBlobsSegmentedAsync(null);
+            foreach (var item in blobItem.Results)
+            {
+                var blob = (CloudBlockBlob)item;
+                string contents = blob.DownloadTextAsync().Result;
+                return contents;
+            }
+            return null;
         }
 
         static void GetSettings(ExecutionContext context, ILogger log)
