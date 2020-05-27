@@ -21,8 +21,9 @@ namespace ServiceBusTriggerTest
         private static string Week;
         private static Settings settings;
         [FunctionName("Function1")]
-        public static void Run([ServiceBusTrigger("defense", Connection = "ServiceBusConnectionString")]string message, ILogger log, ExecutionContext context)
+        public static void Run([ServiceBusTrigger("offense", Connection = "ServiceBusConnectionString")]string message, ILogger log, ExecutionContext context)
         {
+            
             DefFfmpegArgs(message, log, context);
             log.LogInformation($"C# ServiceBus queue trigger function processed message: {message}");
         }
@@ -35,6 +36,12 @@ namespace ServiceBusTriggerTest
                 string outputName;
 
                 GetSettings(context, log);
+
+                //Grab the Season, Season Type, and Week from the XML Metadata
+                if (string.IsNullOrEmpty(Season))
+                {
+                    SetContainerInfo();
+                }
 
                 outfile = message.Substring(message.LastIndexOf("D:\\")).TrimEnd();
                 outputName = message.Substring(message.LastIndexOf("Temp\\") + 5).TrimEnd();
@@ -84,30 +91,12 @@ namespace ServiceBusTriggerTest
             }
         }
 
-        static async void WritePlayVideoBlob(string filename, string filepath, ILogger log)
+        static void WritePlayVideoBlob(string filename, string filepath, ILogger log)
         {
             try
             {
-                string rawXML = await GetXMLBlob("xmlscript");
-                byte[] encodedString = Encoding.UTF8.GetBytes(rawXML);
-
-                MemoryStream memStream = new MemoryStream(encodedString);
-
-                XmlDocument xml = new XmlDocument();
-                xml.Load(memStream);
-
-                foreach (XmlNode node in xml.DocumentElement.ChildNodes)
-                {
-                    if (node.Name == "Game")
-                    {
-                        Season = node.Attributes.GetNamedItem("Season").Value.ToString();
-                        SeasonType = node.Attributes.GetNamedItem("SeasonType").Value;
-                        Week = node.Attributes.GetNamedItem("Week").Value.ToString();
-                    }
-                }
-
                 BlobServiceClient blobServiceClient = new BlobServiceClient(settings.outputStorageAccountConnStr);
-                BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient($"{Season}/{SeasonType}/{Week}/defense/");
+                BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient($"{Season}/{SeasonType}/{Week}/offense/");
 
                 BlobClient blobClient = blobContainerClient.GetBlobClient(filename);
 
@@ -137,6 +126,27 @@ namespace ServiceBusTriggerTest
                 return contents;
             }
             return null;
+        }
+
+        public static async void SetContainerInfo()
+        {
+            string rawXML = await GetXMLBlob("xmlscript");
+            byte[] encodedString = Encoding.UTF8.GetBytes(rawXML);
+
+            MemoryStream memStream = new MemoryStream(encodedString);
+
+            XmlDocument xml = new XmlDocument();
+            xml.Load(memStream);
+
+            foreach (XmlNode node in xml.DocumentElement.ChildNodes)
+            {
+                if (node.Name == "Game")
+                {
+                    Season = node.Attributes.GetNamedItem("Season").Value.ToString();
+                    SeasonType = node.Attributes.GetNamedItem("SeasonType").Value;
+                    Week = node.Attributes.GetNamedItem("Week").Value.ToString();
+                }
+            }
         }
 
         static void GetSettings(ExecutionContext context, ILogger log)
@@ -182,11 +192,6 @@ namespace ServiceBusTriggerTest
                 settings.outputStorageAccountConnStr = config["VikingsStorageAccount"];
                 settings.storageAccountName = config["storageAccountName"];
                 settings.sasToken = config["sasToken"];
-                settings.blobContainerName = "2019/Reg/1/defense/";
-                if (!String.IsNullOrEmpty(config["blobContainerName"]))
-                {
-                    settings.blobContainerName = config["blobContainerName"];
-                }
             }
             catch (Exception ex)
             {
@@ -201,7 +206,6 @@ namespace ServiceBusTriggerTest
         public bool verboseFFMPEGLogging { get; set; }
         public string outputStorageAccountConnStr { get; set; }
         public string storageAccountName { get; set; }
-        public string blobContainerName { get; set; }
         public string sasToken { get; set; }
     }
 }
