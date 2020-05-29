@@ -11,6 +11,8 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System.Text;
 using System.Xml;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ServiceBusTriggerTest
 {
@@ -19,9 +21,10 @@ namespace ServiceBusTriggerTest
         private static string Season;
         private static string SeasonType;
         private static string Week;
+        private static string GameKey;
         private static Settings settings;
         [FunctionName("Function1")]
-        public static void Run([ServiceBusTrigger("offense", Connection = "ServiceBusConnectionString")]string message, ILogger log, ExecutionContext context)
+        public static void Run([ServiceBusTrigger("specialteams", Connection = "ServiceBusConnectionString")]string message, ILogger log, ExecutionContext context)
         {
             
             DefFfmpegArgs(message, log, context);
@@ -96,7 +99,7 @@ namespace ServiceBusTriggerTest
             try
             {
                 BlobServiceClient blobServiceClient = new BlobServiceClient(settings.outputStorageAccountConnStr);
-                BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient($"{Season}/{SeasonType}/{Week}/offense/");
+                BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient($"{Season}/{SeasonType}/{Week}/{GameKey}/");
 
                 BlobClient blobClient = blobContainerClient.GetBlobClient(filename);
 
@@ -119,13 +122,15 @@ namespace ServiceBusTriggerTest
             CloudBlobContainer inputContainer = serviceClient.GetContainerReference($"{inputContainerName}");
             // Connect to the blob file
             var blobItem = await inputContainer.ListBlobsSegmentedAsync(null);
+            var listOfFileNames = new List<CloudBlockBlob>();
             foreach (var item in blobItem.Results)
             {
                 var blob = (CloudBlockBlob)item;
-                string contents = blob.DownloadTextAsync().Result;
-                return contents;
+                listOfFileNames.Add(blob);
             }
-            return null;
+
+            string contents = listOfFileNames[0].DownloadTextAsync().Result;
+            return contents;
         }
 
         public static async void SetContainerInfo()
@@ -145,6 +150,7 @@ namespace ServiceBusTriggerTest
                     Season = node.Attributes.GetNamedItem("Season").Value.ToString();
                     SeasonType = node.Attributes.GetNamedItem("SeasonType").Value;
                     Week = node.Attributes.GetNamedItem("Week").Value.ToString();
+                    GameKey = node.Attributes.GetNamedItem("Gamekey").Value.ToString();
                 }
             }
         }
