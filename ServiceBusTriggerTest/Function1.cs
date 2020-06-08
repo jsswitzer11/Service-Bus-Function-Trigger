@@ -6,13 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Azure.Storage.Blobs;
 using System.Diagnostics;
-using Microsoft.Azure.ServiceBus;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
-using System.Text;
-using System.Xml;
-using System.Collections.Generic;
-using System.Linq;
+using Newtonsoft.Json;
 
 namespace ServiceBusTriggerTest
 {
@@ -24,11 +18,17 @@ namespace ServiceBusTriggerTest
         private static string GameKey;
         private static Settings settings;
         [FunctionName("Function1")]
-        public static void Run([ServiceBusTrigger("specialteams", Connection = "ServiceBusConnectionString")]string message, ILogger log, ExecutionContext context)
+        public static void Run([ServiceBusTrigger("defense_endzone", Connection = "ServiceBusConnectionString")]string message, ILogger log, ExecutionContext context)
         {
-            
-            DefFfmpegArgs(message, log, context);
-            log.LogInformation($"C# ServiceBus queue trigger function processed message: {message}");
+            var newGameMessage = JsonConvert.DeserializeObject<messageBody>(message);
+            Season = newGameMessage.season;
+            SeasonType = newGameMessage.seasontype;
+            Week = newGameMessage.week;
+            GameKey = newGameMessage.gamekey;
+            string command = newGameMessage.ffmpegCmd;
+
+            DefFfmpegArgs(command, log, context);
+            log.LogInformation($"C# ServiceBus queue trigger function processed message: {command}");
         }
 
         public static void DefFfmpegArgs(string message, ILogger log, ExecutionContext context)
@@ -39,12 +39,6 @@ namespace ServiceBusTriggerTest
                 string outputName;
 
                 GetSettings(context, log);
-
-                //Grab the Season, Season Type, and Week from the XML Metadata
-                if (string.IsNullOrEmpty(Season))
-                {
-                    SetContainerInfo();
-                }
 
                 outfile = message.Substring(message.LastIndexOf("D:\\")).TrimEnd();
                 outputName = message.Substring(message.LastIndexOf("Temp\\") + 5).TrimEnd();
@@ -99,6 +93,9 @@ namespace ServiceBusTriggerTest
             try
             {
                 BlobServiceClient blobServiceClient = new BlobServiceClient(settings.outputStorageAccountConnStr);
+                //var accountName = new Uri(settings.storageAccountName);
+                //var sasToken = new StorageSharedKeyCredential(settings.storageAccountName, settings.sasToken);
+                //BlobServiceClient blobServiceClient = new BlobServiceClient(accountName, sasToken, null);
                 BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient($"{Season}/{SeasonType}/{Week}/{GameKey}/");
 
                 BlobClient blobClient = blobContainerClient.GetBlobClient(filename);
@@ -110,48 +107,6 @@ namespace ServiceBusTriggerTest
             catch (Exception ex)
             {
                 log.LogInformation(ex.Message);
-            }
-        }
-
-        public static async Task<string> GetXMLBlob(string inputContainerName)
-        {
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(settings.outputStorageAccountConnStr);
-            // Connect to the blob storage
-            var serviceClient = storageAccount.CreateCloudBlobClient();
-            // Connect to the input
-            CloudBlobContainer inputContainer = serviceClient.GetContainerReference($"{inputContainerName}");
-            // Connect to the blob file
-            var blobItem = await inputContainer.ListBlobsSegmentedAsync(null);
-            var listOfFileNames = new List<CloudBlockBlob>();
-            foreach (var item in blobItem.Results)
-            {
-                var blob = (CloudBlockBlob)item;
-                listOfFileNames.Add(blob);
-            }
-
-            string contents = listOfFileNames[0].DownloadTextAsync().Result;
-            return contents;
-        }
-
-        public static async void SetContainerInfo()
-        {
-            string rawXML = await GetXMLBlob("xmlscript");
-            byte[] encodedString = Encoding.UTF8.GetBytes(rawXML);
-
-            MemoryStream memStream = new MemoryStream(encodedString);
-
-            XmlDocument xml = new XmlDocument();
-            xml.Load(memStream);
-
-            foreach (XmlNode node in xml.DocumentElement.ChildNodes)
-            {
-                if (node.Name == "Game")
-                {
-                    Season = node.Attributes.GetNamedItem("Season").Value.ToString();
-                    SeasonType = node.Attributes.GetNamedItem("SeasonType").Value;
-                    Week = node.Attributes.GetNamedItem("Week").Value.ToString();
-                    GameKey = node.Attributes.GetNamedItem("Gamekey").Value.ToString();
-                }
             }
         }
 
@@ -213,5 +168,13 @@ namespace ServiceBusTriggerTest
         public string outputStorageAccountConnStr { get; set; }
         public string storageAccountName { get; set; }
         public string sasToken { get; set; }
+    }
+    class messageBody
+    {
+        public string season { get; set; }
+        public string seasontype { get; set; }
+        public string week { get; set; }
+        public string gamekey { get; set; }
+        public string ffmpegCmd { get; set; }
     }
 }
