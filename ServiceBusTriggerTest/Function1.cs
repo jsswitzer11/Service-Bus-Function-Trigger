@@ -18,7 +18,7 @@ namespace ServiceBusTriggerTest
         private static string GameKey;
         private static Settings settings;
         [FunctionName("Function1")]
-        public static void Run([ServiceBusTrigger("defense_endzone", Connection = "ServiceBusConnectionString")]string message, ILogger log, ExecutionContext context)
+        public static void Run([ServiceBusTrigger("specialteams", Connection = "ServiceBusConnectionString")]string message, ILogger log, ExecutionContext context)
         {
             var newGameMessage = JsonConvert.DeserializeObject<messageBody>(message);
             Season = newGameMessage.season;
@@ -93,10 +93,7 @@ namespace ServiceBusTriggerTest
             try
             {
                 BlobServiceClient blobServiceClient = new BlobServiceClient(settings.outputStorageAccountConnStr);
-                //var accountName = new Uri(settings.storageAccountName);
-                //var sasToken = new StorageSharedKeyCredential(settings.storageAccountName, settings.sasToken);
-                //BlobServiceClient blobServiceClient = new BlobServiceClient(accountName, sasToken, null);
-                BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient($"{Season}/{SeasonType}/{Week}/{GameKey}/");
+                BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient($"{Season}/{SeasonType}/{Week}/{GameKey}/processed/");
 
                 BlobClient blobClient = blobContainerClient.GetBlobClient(filename);
 
