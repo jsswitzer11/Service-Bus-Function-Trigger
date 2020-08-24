@@ -12,6 +12,7 @@ namespace ServiceBusTriggerTest
 {
     public static class Function1
     {
+        private static string League;
         private static string Season;
         private static string SeasonType;
         private static string Week;
@@ -21,6 +22,7 @@ namespace ServiceBusTriggerTest
         public static void Run([ServiceBusTrigger("specialteams", Connection = "ServiceBusConnectionString")]string message, ILogger log, ExecutionContext context)
         {
             var newGameMessage = JsonConvert.DeserializeObject<messageBody>(message);
+            League = newGameMessage.league;
             Season = newGameMessage.season;
             SeasonType = newGameMessage.seasontype;
             Week = newGameMessage.week;
@@ -93,7 +95,7 @@ namespace ServiceBusTriggerTest
             try
             {
                 BlobServiceClient blobServiceClient = new BlobServiceClient(settings.outputStorageAccountConnStr);
-                BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient($"{Season}/{SeasonType}/{Week}/{GameKey}/processed/");
+                BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient($"{League}/{Season}/{SeasonType}/{Week}/{GameKey}/processed/");
 
                 BlobClient blobClient = blobContainerClient.GetBlobClient(filename);
 
@@ -148,8 +150,6 @@ namespace ServiceBusTriggerTest
                 }
 
                 settings.outputStorageAccountConnStr = config["VikingsStorageAccount"];
-                settings.storageAccountName = config["storageAccountName"];
-                settings.sasToken = config["sasToken"];
             }
             catch (Exception ex)
             {
@@ -163,11 +163,10 @@ namespace ServiceBusTriggerTest
         public string outputPath { get; set; }
         public bool verboseFFMPEGLogging { get; set; }
         public string outputStorageAccountConnStr { get; set; }
-        public string storageAccountName { get; set; }
-        public string sasToken { get; set; }
     }
     class messageBody
     {
+        public string league { get; set; }
         public string season { get; set; }
         public string seasontype { get; set; }
         public string week { get; set; }
