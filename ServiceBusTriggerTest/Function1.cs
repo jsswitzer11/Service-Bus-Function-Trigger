@@ -45,6 +45,7 @@ namespace ServiceBusTriggerTest
                 outfile = message.Substring(message.LastIndexOf("D:\\")).TrimEnd();
                 outputName = message.Substring(message.LastIndexOf("Temp\\") + 5).TrimEnd();
 
+                //Comment the two lines above and uncomment the two lines below to test locally
                 //outfile = message.Substring(message.LastIndexOf("C:\\")).TrimEnd();
                 //outputName = message.Substring(message.LastIndexOf("FfmpegArgs\\") + 11).TrimEnd();
 
