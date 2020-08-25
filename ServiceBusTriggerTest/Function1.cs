@@ -19,7 +19,7 @@ namespace ServiceBusTriggerTest
         private static string GameKey;
         private static Settings settings;
         [FunctionName("Function1")]
-        public static void Run([ServiceBusTrigger("specialteams", Connection = "ServiceBusConnectionString")]string message, ILogger log, ExecutionContext context)
+        public static void Run([ServiceBusTrigger("defense_endzone", Connection = "ServiceBusConnectionString")]string message, ILogger log, ExecutionContext context)
         {
             var newGameMessage = JsonConvert.DeserializeObject<messageBody>(message);
             League = newGameMessage.league;
