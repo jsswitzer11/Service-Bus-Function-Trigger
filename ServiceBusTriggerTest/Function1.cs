@@ -17,6 +17,7 @@ namespace ServiceBusTriggerTest
         private static string SeasonType;
         private static string Week;
         private static string GameKey;
+        private static string GameName;
         private static Settings settings;
         [FunctionName("Function1")]
         public static void Run([ServiceBusTrigger("defense_endzone", Connection = "ServiceBusConnectionString")]string message, ILogger log, ExecutionContext context)
@@ -27,6 +28,7 @@ namespace ServiceBusTriggerTest
             SeasonType = newGameMessage.seasontype;
             Week = newGameMessage.week;
             GameKey = newGameMessage.gamekey;
+            GameName = newGameMessage.gamename;
             string command = newGameMessage.ffmpegCmd;
 
             DefFfmpegArgs(command, log, context);
@@ -96,7 +98,7 @@ namespace ServiceBusTriggerTest
             try
             {
                 BlobServiceClient blobServiceClient = new BlobServiceClient(settings.outputStorageAccountConnStr);
-                BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient($"{League}/{Season}/{SeasonType}/{Week}/{GameKey}/processed/");
+                BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient($"{League}/{Season}/{SeasonType}/{Week}/{GameKey}/{GameName}/");
 
                 BlobClient blobClient = blobContainerClient.GetBlobClient(filename);
 
@@ -172,6 +174,7 @@ namespace ServiceBusTriggerTest
         public string seasontype { get; set; }
         public string week { get; set; }
         public string gamekey { get; set; }
+        public string gamename { get; set; }
         public string ffmpegCmd { get; set; }
     }
 }
