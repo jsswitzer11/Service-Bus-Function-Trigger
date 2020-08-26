@@ -133,15 +133,6 @@ namespace ServiceBusTriggerTest
                     settings.ffmpegPath = config["ffmpegPath"];
                 }
 
-                if (String.IsNullOrEmpty(config["outputPath"]))
-                {
-                    settings.outputPath = Path.GetTempPath();
-                }
-                else
-                {
-                    settings.outputPath = config["outputPath"];
-                }
-
                 //Assume verbose logging is off unless set to true in config
                 settings.verboseFFMPEGLogging = false;
                 if (!String.IsNullOrEmpty(config["verboseFFMPEGLogging"]))
@@ -163,7 +154,6 @@ namespace ServiceBusTriggerTest
     class Settings
     {
         public string ffmpegPath { get; set; }
-        public string outputPath { get; set; }
         public bool verboseFFMPEGLogging { get; set; }
         public string outputStorageAccountConnStr { get; set; }
     }
