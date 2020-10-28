@@ -2,7 +2,7 @@
   "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "metadata": {
-    "_dependencyType": "function.windows.appService"
+    "_dependencyType": "function.windows.premium"
   },
   "parameters": {
     "resourceGroupName": {
@@ -21,7 +21,7 @@
     },
     "resourceName": {
       "type": "string",
-      "defaultValue": "DefenseSidelineServiceBusTrigger",
+      "defaultValue": "DefenseSidelineSBTrigger",
       "metadata": {
         "description": "Name of the main resource to be created by this template."
       }
@@ -111,10 +111,7 @@
                 "kind": "functionapp",
                 "httpsOnly": true,
                 "reserved": false,
-                "serverFarmId": "[variables('appServicePlan_ResourceId')]",
-                "siteConfig": {
-                  "alwaysOn": true
-                }
+                "serverFarmId": "[variables('appServicePlan_ResourceId')]"
               },
               "identity": {
                 "type": "SystemAssigned"
@@ -128,6 +125,8 @@
                     "[variables('function_ResourceId')]"
                   ],
                   "properties": {
+                    "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storage_name'), ';AccountKey=', listKeys(variables('storage_ResourceId'), '2017-10-01').keys[0].value, ';EndpointSuffix=', 'core.windows.net')]",
+                    "WEBSITE_CONTENTSHARE": "[toLower(parameters('resourceName'))]",
                     "AzureWebJobsDashboard": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storage_name'), ';AccountKey=', listKeys(variables('storage_ResourceId'), '2017-10-01').keys[0].value, ';EndpointSuffix=', 'core.windows.net')]",
                     "AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storage_name'), ';AccountKey=', listKeys(variables('storage_ResourceId'), '2017-10-01').keys[0].value, ';EndpointSuffix=', 'core.windows.net')]",
                     "FUNCTIONS_EXTENSION_VERSION": "~3",
@@ -158,13 +157,15 @@
               "type": "Microsoft.Web/serverFarms",
               "apiVersion": "2015-08-01",
               "sku": {
-                "name": "S1",
-                "tier": "Standard",
-                "family": "S",
-                "size": "S1"
+                "name": "EP1",
+                "tier": "ElasticPremium",
+                "family": "EP",
+                "size": "EP1"
               },
               "properties": {
-                "name": "[variables('appServicePlan_name')]"
+                "name": "[variables('appServicePlan_name')]",
+                "numberOfWorkers": "1",
+                "maximumElasticWorkerCount": "10"
               }
             }
           ]
